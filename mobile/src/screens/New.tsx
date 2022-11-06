@@ -6,12 +6,15 @@ import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { useState } from "react";
 import { api } from "../services/api";
+import { useAuth } from "../hooks/useAuth";
 
 export function New(){
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false)
 
   const toast = useToast();
+
+  const { signOut } = useAuth()
 
   async function handlePoolCreate() {
     if (!title.trim()) {
@@ -48,7 +51,7 @@ export function New(){
 
   return (
     <VStack flex={1} bgColor="gray.900">
-      <Header title="Criar novo bolão" />
+      <Header title="Criar novo bolão" showSignOutButton onSignOut={signOut} />
 
       <VStack mt={8} mx={5} alignItems="center">
         <Logo />

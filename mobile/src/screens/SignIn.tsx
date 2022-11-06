@@ -4,9 +4,14 @@ import { Fontisto } from '@expo/vector-icons'
 import Logo from '../assets/logo.svg';
 import { Button } from "../components/Button";
 import { useAuth } from "../hooks/useAuth";
+import { useEffect } from "react";
 
 export function SignIn() {
-  const { signIn, isUserLoading } = useAuth()
+  const { signIn, signInWithStorageToken, isUserLoading } = useAuth()
+
+  useEffect(() => {
+    signInWithStorageToken()
+  }, [])
 
   return (
     <Center flex={1} bgColor="gray.900" p={7}>

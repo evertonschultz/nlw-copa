@@ -2,7 +2,10 @@ import { createContext, ReactNode, useEffect, useState } from "react";
 import * as Google from 'expo-auth-session/providers/google';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { api } from '../services/api';
+import { useToast } from "native-base";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -15,6 +18,8 @@ export interface AuthContextDataProps {
   user: UserProps;
   isUserLoading: boolean;
   signIn: () => Promise<void>;
+  signOut: () => Promise<void>;
+  signInWithStorageToken: () => Promise<void>;
 }
 
 interface AuthProviderProps {
@@ -26,6 +31,8 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<UserProps>({} as UserProps);
   const [isUserLoading, setIsUserLoading] = useState(false)
 
+  const toast = useToast();
+
   const [request, response, promptAsync] = Google.useAuthRequest({
     clientId: process.env.CLIENT_ID,
     redirectUri: AuthSession.makeRedirectUri({ useProxy: true }),
@@ -35,8 +42,8 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
   async function signIn() {
     try {
       setIsUserLoading(true)
+  
       await promptAsync();
-
     } catch (error) {
       console.log(error)
       throw error;
@@ -45,8 +52,23 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
     }
   }
 
+  async function signOut() {
+    try {
+      await AsyncStorage.removeItem('@nlw-copa:user-token');
+      setUser({} as UserProps);
+    } catch (error) {
+      console.log(error)
+
+      toast.show({
+        title: 'Não foi possível deslogar da aplicação.',
+        placement: 'top',
+        bgColor: 'red.500'
+      })
+    }
+  }
+
   async function signInWithGoogle(access_token: string) {
-    console.log("TOKEN DE AUTENTICAÇÃO ===>", access_token);
+    await AsyncStorage.setItem('@nlw-copa:user-token', access_token);
 
     try {
       setIsUserLoading(true)
@@ -63,6 +85,19 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
     }
   }
 
+  async function signInWithStorageToken() {
+    try {
+      setIsUserLoading(true)
+
+      const access_token = await AsyncStorage.getItem('@nlw-copa:user-token')
+      if(access_token !== null) {
+        return signInWithGoogle(access_token)
+      }
+    } catch (error) {} finally {
+      setIsUserLoading(false)
+    }
+  }
+
   useEffect(() => {
     if(response?.type === 'success' && response.authentication?.accessToken) {
       signInWithGoogle(response.authentication.accessToken)
@@ -73,6 +108,8 @@ export function AuthContextProvider({ children }: AuthProviderProps) {
     <AuthContext.Provider
       value={{
         signIn,
+        signOut,
+        signInWithStorageToken,
         isUserLoading,
         user,
       }}
