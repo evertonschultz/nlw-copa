@@ -10,7 +10,9 @@
 
 <p>Na qual foi possível praticar muita coisa do universo JavaScript, por exemplo: Autenticação e rotas com o fastify, banco de dados com prisma, estilização na web com tailwindcss, estilização em apps mobile com native-base. Assim como uso e criação de hooks, tipagem e contextos.</p>
 
-<p>Até o momento como extra eu adicionei a funcionalidade de salvar o Token do usuário no LocalStorage do dispositivo para fazer login automatico, assim como o funcionalidade de logout.</p>
+<p>Até o momento como extra eu adicionei a funcionalidade de salvar o Token do usuário no LocalStorage do dispositivo para fazer login automatico, assim como o funcionalidade de logout na aplicação mobile.</p>
+
+<p>OBS: Ainda falta a implementação da funcionalidade de ranking do grupo na aplicação mobile.</p>
 
 ---
 
