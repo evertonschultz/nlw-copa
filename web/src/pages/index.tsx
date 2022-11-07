@@ -2,10 +2,17 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { FormEvent, useState } from 'react';
 
+interface UserAvatarProps {
+  id: string;
+  name: string;
+  avatarUrl: string
+}
+
 interface HomePros {
   poolCount: number;
   guessCount: number;
   userCount: number;
+  usersAvatar: UserAvatarProps[]
 }
 
 import appNlwCopa from '../assets/app-nlw-copa.png'
@@ -47,7 +54,7 @@ export default function Home(props: HomePros) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <div className="max-w-[1124px] h-screen mx-auto gap-28 grid grid-cols-2 items-center">
+      <div className="max-w-[1124px] h-screen mx-4 gap-28 flex lg:mx-auto lg:grid lg:grid-cols-2 items-center">
         <main>
           <Image src={logoImg} alt="NLW Copa" />
 
@@ -56,7 +63,19 @@ export default function Home(props: HomePros) {
           </h1>
 
           <div className="mt-10 flex items-center gap-2">
-            <Image src={avatares} alt="" />
+            <div className="flex -space-x-4">
+              {
+                props.usersAvatar.map(user => (
+                  <Image
+                    width={52}
+                    height={52}
+                    className="w-14 h-14 rounded-full border-4 border-gray-900"
+                    key={user.id}
+                    src={user.avatarUrl}
+                    alt={user.name} />
+                ))
+              }
+            </div>
             <strong className="text-gray-100 text-xl">
               <span className="text-ignite-500">+{props.userCount}</span> pessoas já estão usando
             </strong>
@@ -84,7 +103,7 @@ export default function Home(props: HomePros) {
           </p>
 
           <div className="mt-10 pt-10 border-t border-gray-600 flex items-center justify-between text-gray-100">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 md:gap-6">
               <Image src={iconCheck} alt="" />
               <div className="flex flex-col">
                 <span className="font-bold text-2xl">+{props.poolCount}</span>
@@ -94,7 +113,7 @@ export default function Home(props: HomePros) {
 
             <div className="w-px h-14 bg-gray-600" />
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 md:gap-6">
               <Image src={iconCheck} alt="" />
               <div className="flex flex-col">
                 <span className="font-bold text-2xl">+{props.guessCount}</span>
@@ -107,6 +126,7 @@ export default function Home(props: HomePros) {
           src={appNlwCopa}
           alt="Dois celulares exibindo uma prévia da aplicação móvel do NLW Copa"
           quality={100}
+          className="hidden lg:flex"
         />
       </div>
     </>
@@ -117,18 +137,21 @@ export async function getStaticProps() {
   const [
     poolCountResponse,
     guessCountResponse,
-    userCountResponse
+    userCountResponse,
+    usersAvatarResponse
   ] = await Promise.all([
     api.get('pools/count'),
     api.get('guesses/count'),
-    api.get('users/count')
+    api.get('users/count'),
+    api.get('users')
   ])
 
   return {
     props: {
       poolCount: poolCountResponse.data.count,
       guessCount: guessCountResponse.data.count,
-      userCount: userCountResponse.data.count
+      userCount: userCountResponse.data.count,
+      usersAvatar: usersAvatarResponse.data.users
     },
     revalidate: 60 * 10, // 10 minutos
   }
