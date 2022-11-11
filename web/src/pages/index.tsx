@@ -1,6 +1,8 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import { FormEvent, useState } from 'react';
+import { getSession, signOut } from 'next-auth/react';
+import { GetServerSideProps } from 'next';
 
 interface UserAvatarProps {
   id: string;
@@ -12,12 +14,12 @@ interface HomePros {
   poolCount: number;
   guessCount: number;
   userCount: number;
-  usersAvatar: UserAvatarProps[]
+  usersAvatar: UserAvatarProps[],
+  accessToken: string
 }
 
 import appNlwCopa from '../assets/app-nlw-copa.png'
 import logoImg from '../assets/logo.svg'
-import avatares from '../assets/avatares.png'
 import iconCheck from '../assets/icon-check.svg'
 import { api } from '../lib/axios';
 
@@ -28,6 +30,9 @@ export default function Home(props: HomePros) {
     event.preventDefault()
 
     try {
+      const tokenResponse = await api.post('/users', { access_token: props.accessToken })
+      api.defaults.headers.common['Authorization'] = `Bearer ${tokenResponse.data.token}`
+      
       const response = await api.post('/pools', {
         title: poolTitle,
       })
@@ -39,11 +44,11 @@ export default function Home(props: HomePros) {
       alert(`Bolão criado com sucessso, o código - ${code} - foi copiado para sua área de tranferência!`)
     } catch (error) {
       console.log(error)
-      alert('Falha ao criar o bolão, tente novamente!')
+      alert('Falha ao criar o bolão, faça seu login e tente novamente!')
+      signOut()
     } finally {
       setPoolTitle('')
     }
-    
   }
 
   return (
@@ -56,7 +61,10 @@ export default function Home(props: HomePros) {
       
       <div className="max-w-[1124px] h-screen mx-4 gap-28 flex lg:mx-auto lg:grid lg:grid-cols-2 items-center">
         <main>
-          <Image src={logoImg} alt="NLW Copa" />
+          <div className="flex flex-1 justify-between items-center">
+            <Image src={logoImg} alt="NLW Copa" />
+            <button className="bg-gray-800 rounded px-3 py-1 text-yellow-500" onClick={() => signOut()} >Sair</button>
+          </div>
 
           <h1 className="mt-14 text-white text-5xl font-bold leading-tight">
             Crie seu próprio bolão da copa e compartilhe entre amigos!
@@ -133,7 +141,18 @@ export default function Home(props: HomePros) {
   )
 }
 
-export async function getStaticProps() {
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const session = await getSession(context)
+
+  if(!session) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false
+      }
+    }
+  }
+
   const [
     poolCountResponse,
     guessCountResponse,
@@ -151,8 +170,8 @@ export async function getStaticProps() {
       poolCount: poolCountResponse.data.count,
       guessCount: guessCountResponse.data.count,
       userCount: userCountResponse.data.count,
-      usersAvatar: usersAvatarResponse.data.users
-    },
-    revalidate: 60 * 10, // 10 minutos
+      usersAvatar: usersAvatarResponse.data.users,
+      accessToken: session.accessToken,
+    }
   }
 }
